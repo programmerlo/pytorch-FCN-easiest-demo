@@ -17,18 +17,23 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
 
-
 # 104.00698793, 116.66876762, 122.67891434
 
-def read_images(root, train=True):
-    file_dir = root + ('/train/' if train else '/val/')
-    txt_fname = file_dir + ('train.txt' if train else 'val.txt')
+def read_images(root, test=True):
+    file_dir = root + ('/test/' if test else '/val/')
+    txt_fname = file_dir + ('test.txt' if test else 'val.txt')
     with open(txt_fname, 'r') as f:
         images = f.read().split()
     data = [os.path.join(file_dir + 'images', i + '.png') for i in images]
     label = [os.path.join(file_dir + 'labels', i + '.png') for i in images]
     return data, label
 
+def read_image_names(root, test=True):
+    file_dir = root + ('/test/' if test else '/val/')
+    txt_fname = file_dir + ('test.txt' if test else 'val.txt')
+    with open(txt_fname, 'r') as f:
+        images = f.read().split()
+    return images
 
 class BagDataset(Dataset):
 
@@ -46,13 +51,13 @@ class BagDataset(Dataset):
         label_name = self.label_list[idx]
         imgB = cv2.imread(label_name, 0)
         imgB = cv2.resize(imgB, (160, 160))
-        # imgB[imgB == 6] = 100
-        # imgB[imgB != 100] = 0
-        # imgB[imgB == 100] = 1
-        imgB = imgB/255
-        imgB = imgB.astype('uint8')
-        imgB = onehot(imgB, 2)
-        imgB = imgB.transpose(2, 0, 1)
+        #imgB[imgB == 6] = 100
+        #imgB[imgB != 100] = 0
+        #imgB[imgB == 100] = 1
+        #imgB = imgB/255
+        #imgB = imgB.astype('uint8')
+        #imgB = onehot(imgB, 2)
+        #imgB = imgB.transpose(2, 0, 1)
         imgB = torch.FloatTensor(imgB)
         # print(imgB.shape)
         if self.transform:
@@ -60,19 +65,23 @@ class BagDataset(Dataset):
 
         return imgA, imgB
 
-
+name_list = read_image_names('E:/03_python_file/comp5421_TASK2')
 bag = BagDataset(transform)
 
-train_size = int(0.9 * len(bag))
-test_size = len(bag) - train_size
-train_dataset, test_dataset = random_split(bag, [train_size, test_size])
+# train_size = len(bag)
+# test_size = len(bag)
+# train_dataset, test_dataset = random_split(bag, [train_size, test_size])
+# print(train_size)
+# print(test_size)
+#train_dataloader = DataLoader(test_dataset, batch_size=50)
+#test_dataloader = DataLoader(bag, batch_size=4, shuffle=True, num_workers=4)
+test_dataloader = DataLoader(bag, batch_size=1, shuffle=False, num_workers=1)
 
-train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=4)
-test_dataloader = DataLoader(test_dataset, batch_size=4, shuffle=True, num_workers=4)
+#test_dataloader = DataLoader(test_dataset, batch_size=50)
 
 if __name__ == '__main__':
 
-    for index, (img, label) in enumerate(train_dataloader):
+    for index, (img, label) in enumerate(test_dataloader):
         print(img.shape, label.shape)
         print(type(img))
         plt.subplot(1, 2, 1)
@@ -81,10 +90,11 @@ if __name__ == '__main__':
         # im2display = img[0, :, :, :].transpose((1, 2, 0))
         # plt.imshow(im2display, interpolation='nearest')
         # plt.imshow(img[0, 0, :, :])
+        print(label.shape)
         plt.subplot(1, 2, 2)
-        plt.imshow(label[0, 0, :, :])
+        plt.imshow(label[0, :, :])
         plt.show()
-        print(label[0, 1, :, :])
+        print(label[0, :, :])
         break
 
     # for train_batch in train_dataloader:
